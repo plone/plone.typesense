@@ -3,4 +3,4 @@
 from zope.i18nmessageid import MessageFactory
 
 
-_ = MessageFactory('plone.typesense')
+_ = MessageFactory("plone.typesense")

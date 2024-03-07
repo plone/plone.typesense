@@ -1,0 +1,13 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    i18n_domain="plone.typesense">
+
+ <!-- -*- extra stuff goes here -*- -->
+
+  <subscriber for="plone.dexterity.interfaces.IDexterityContent
+                   zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+              handler=".index_in_typesense.handler"
+              />
+
+
+</configure>

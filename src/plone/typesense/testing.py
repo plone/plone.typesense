@@ -19,13 +19,15 @@ class PloneTypesenseLayer(PloneSandboxLayer):
         # The z3c.autoinclude feature is disabled in the Plone fixture base
         # layer.
         import plone.app.dexterity
+
         self.loadZCML(package=plone.app.dexterity)
         import plone.restapi
+
         self.loadZCML(package=plone.restapi)
         self.loadZCML(package=plone.typesense)
 
     def setUpPloneSite(self, portal):
-        applyProfile(portal, 'plone.typesense:default')
+        applyProfile(portal, "plone.typesense:default")
 
 
 PLONE_TYPESENSE_FIXTURE = PloneTypesenseLayer()
@@ -33,13 +35,13 @@ PLONE_TYPESENSE_FIXTURE = PloneTypesenseLayer()
 
 PLONE_TYPESENSE_INTEGRATION_TESTING = IntegrationTesting(
     bases=(PLONE_TYPESENSE_FIXTURE,),
-    name='PloneTypesenseLayer:IntegrationTesting',
+    name="PloneTypesenseLayer:IntegrationTesting",
 )
 
 
 PLONE_TYPESENSE_FUNCTIONAL_TESTING = FunctionalTesting(
     bases=(PLONE_TYPESENSE_FIXTURE,),
-    name='PloneTypesenseLayer:FunctionalTesting',
+    name="PloneTypesenseLayer:FunctionalTesting",
 )
 
 
@@ -49,5 +51,5 @@ PLONE_TYPESENSE_ACCEPTANCE_TESTING = FunctionalTesting(
         REMOTE_LIBRARY_BUNDLE_FIXTURE,
         z2.ZSERVER_FIXTURE,
     ),
-    name='PloneTypesenseLayer:AcceptanceTesting',
+    name="PloneTypesenseLayer:AcceptanceTesting",
 )

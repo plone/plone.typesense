@@ -1,0 +1,5 @@
+===============
+plone.typesense
+===============
+
+User documentation

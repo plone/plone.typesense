@@ -7,4 +7,3 @@ def handler(obj, event):
     # users_can_view: []
     # all fields without fieldlevel permission
     # all fields with fieldlevel permission
-

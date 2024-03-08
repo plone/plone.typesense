@@ -43,6 +43,8 @@
 
   <!-- -*- extra stuff goes here -*- -->
 
+  <include package=".views" />
+
     <include package=".controlpanels" />
 
 

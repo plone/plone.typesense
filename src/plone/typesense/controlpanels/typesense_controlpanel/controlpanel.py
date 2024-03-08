@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-import json
-
 from plone import schema
-from plone.app.registry.browser.controlpanel import (
-    ControlPanelFormWrapper,
-    RegistryEditForm,
-)
+from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
+from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.restapi.controlpanels import RegistryConfigletPanel
 from plone.typesense import _
 from plone.typesense.interfaces import IPloneTypesenseLayer
 from plone.z3cform import layout
 from zope.component import adapter
 from zope.interface import Interface
+
+import json
 
 
 class ITypesenseControlpanel(Interface):
@@ -68,7 +66,7 @@ class ITypesenseControlpanel(Interface):
                 "title",
                 "description",
                 "text:20",
-            ]
+            ],
         },
         required=True,
     )

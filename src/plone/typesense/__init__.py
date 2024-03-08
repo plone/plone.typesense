@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """Init and utils."""
+from zope.i18nmessageid import MessageFactory
+
 import logging
 
-from zope.i18nmessageid import MessageFactory
 
 log = logging.getLogger("plone.typesense")
 

@@ -7,6 +7,15 @@
  <!-- -*- extra stuff goes here -*- -->
 
   <browser:page
+    name="typesense-reindex-collection"
+    for="*"
+    class=".typesense_reindex_collection.TypesenseReindexCollection"
+    template="typesense_reindex_collection.pt"
+    permission="zope2.View"
+    layer="plone.typesense.interfaces.IPloneTypesenseLayer"
+    />
+
+  <browser:page
     name="typesense-test-connection"
     for="*"
     class=".typesense_test_connection.TypesenseTestConnection"

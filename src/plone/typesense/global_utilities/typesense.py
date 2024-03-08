@@ -1,10 +1,12 @@
-import typesense
 from plone import api
 from plone.typesense import _
 from plone.typesense.controlpanels.typesense_controlpanel.controlpanel import (
     ITypesenseControlpanel,
 )
-from zope.interface import Interface, implementer
+from zope.interface import implementer
+from zope.interface import Interface
+
+import typesense
 
 
 class ITypesenseConnector(Interface):

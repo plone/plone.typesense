@@ -1,17 +1,15 @@
 # -*- coding: utf-8 -*-
-import json
-
 from plone import schema
-from plone.app.registry.browser.controlpanel import (
-    ControlPanelFormWrapper,
-    RegistryEditForm,
-)
+from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
+from plone.app.registry.browser.controlpanel import RegistryEditForm
 from plone.restapi.controlpanels import RegistryConfigletPanel
 from plone.typesense import _
 from plone.typesense.interfaces import IPloneTypesenseLayer
 from plone.z3cform import layout
 from zope.component import adapter
 from zope.interface import Interface
+
+import json
 
 
 class ITypesenseControlpanel(Interface):
@@ -34,46 +32,46 @@ class ITypesenseControlpanel(Interface):
 
     host = schema.TextLine(
         title=_(
-            u'Typesense Host',
+            "Typesense Host",
         ),
         description=_(
-            u'',
+            "",
         ),
-        default=u'localhost',
+        default="localhost",
         required=False,
         readonly=False,
     )
 
     port = schema.TextLine(
         title=_(
-            u'Typesense Port',
+            "Typesense Port",
         ),
         description=_(
-            u'',
+            "",
         ),
-        default='8108',
+        default="8108",
         required=False,
         readonly=False,
     )
 
     protocol = schema.TextLine(
         title=_(
-            u'Typesense Protocol',
+            "Typesense Protocol",
         ),
         description=_(
-            u'For Typesense Cloud or other external setups use https!',
+            "For Typesense Cloud or other external setups use https!",
         ),
-        default=u'http',
+        default="http",
         required=False,
         readonly=False,
     )
 
     timeout = schema.Int(
         title=_(
-            u'Typesense connection timeout',
+            "Typesense connection timeout",
         ),
         description=_(
-            u'Connection timeout in milliseconds',
+            "Connection timeout in milliseconds",
         ),
         required=False,
         default=300,

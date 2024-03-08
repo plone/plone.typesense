@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
+import json
+
 from plone import schema
-from plone.app.registry.browser.controlpanel import ControlPanelFormWrapper
-from plone.app.registry.browser.controlpanel import RegistryEditForm
+from plone.app.registry.browser.controlpanel import (
+    ControlPanelFormWrapper,
+    RegistryEditForm,
+)
 from plone.restapi.controlpanels import RegistryConfigletPanel
 from plone.typesense import _
 from plone.typesense.interfaces import IPloneTypesenseLayer
 from plone.z3cform import layout
 from zope.component import adapter
 from zope.interface import Interface
-
-import json
 
 
 class ITypesenseControlpanel(Interface):
@@ -28,6 +30,55 @@ class ITypesenseControlpanel(Interface):
         title=_("Typesense Admin API key"),
         default="",
         required=True,
+    )
+
+    host = schema.TextLine(
+        title=_(
+            u'Typesense Host',
+        ),
+        description=_(
+            u'',
+        ),
+        default=u'localhost',
+        required=False,
+        readonly=False,
+    )
+
+    port = schema.TextLine(
+        title=_(
+            u'Typesense Port',
+        ),
+        description=_(
+            u'',
+        ),
+        default='8108',
+        required=False,
+        readonly=False,
+    )
+
+    protocol = schema.TextLine(
+        title=_(
+            u'Typesense Protocol',
+        ),
+        description=_(
+            u'For Typesense Cloud or other external setups use https!',
+        ),
+        default=u'http',
+        required=False,
+        readonly=False,
+    )
+
+    timeout = schema.Int(
+        title=_(
+            u'Typesense connection timeout',
+        ),
+        description=_(
+            u'Connection timeout in milliseconds',
+        ),
+        required=False,
+        default=300,
+        # defaultFactory=get_default_timeout,
+        readonly=False,
     )
 
     ts_schema = schema.JSONField(

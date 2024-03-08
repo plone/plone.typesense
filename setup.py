@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """Installer for the plone.typesense package."""
 
-from setuptools import find_packages
-from setuptools import setup
-
+from setuptools import find_packages, setup
 
 long_description = "\n\n".join(
     [
@@ -56,6 +54,7 @@ setup(
         "z3c.jbot",
         "plone.api>=1.8.4",
         "plone.app.dexterity",
+        "typesense",
     ],
     extras_require={
         "test": [

@@ -47,5 +47,6 @@
 
 
   <include package=".subscribers" />
+  <include package=".global_utilities" />
 
 </configure>

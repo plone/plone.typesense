@@ -5,9 +5,7 @@ from plone.typesense import log
 from plone.typesense.global_utilities.typesense import ITypesenseConnector
 from Products.Five.browser import BrowserView
 from zope.component import getUtility
-from zope.interface import implementer
-from zope.interface import Interface
-
+from zope.interface import Interface, implementer
 
 # from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
@@ -26,7 +24,5 @@ class TypesenseTestConnection(BrowserView):
         ts_connector = getUtility(ITypesenseConnector)
         ts_client = ts_connector.get_client()
         log.info(ts_client)
-        import pdb
-
-        pdb.set_trace()  # NOQA: E702
+        self.status = "connection success"
         return self.index()

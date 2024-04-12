@@ -31,7 +31,7 @@
 plone.typesense
 ===============
 
-Typesense Plone integration
+Typesense Plone integration (WIP!)
 
 Features
 --------
@@ -39,20 +39,14 @@ Features
 - Indexing of all or partial content of the Plone site in Typesense.
 
 
+Goals
+-----
 
-
-Documentation
--------------
-
-Full documentation for end users can be found in the "docs" folder, and is also available online at http://docs.plone.org/foo/bar
-
-
-Translations
-------------
-
-This product has been translated into
-
-- Klingon (thanks, K'Plai)
+plone.typesense is meant to be a full Plone integration, including permissions/roles. 
+You will be able to query Typesense directly from a client and also get all data from there. 
+This much faster than quering Plone which queries Typesense and you have to full query power of Typesense. 
+But everything inside Plone will work as exspected. So plone.api/restapi should have all known api calls. 
+But they are limited to what Plone offers with the default search.
 
 
 Installation
@@ -74,7 +68,7 @@ and then running ``bin/buildout``
 Authors
 -------
 
-Provided by awesome people ;)
+Maik Derstappen - MrTango - md@derico.de
 
 
 Contributors
@@ -89,15 +83,13 @@ Contribute
 ----------
 
 - Issue Tracker: https://github.com/collective/plone.typesense/issues
-- Source Code: https://github.com/collective/plone.typesense
-- Documentation: https://docs.plone.org/foo/bar
+- Source Code: https://github.com/collective/plone.typesens
 
 
 Support
 -------
 
 If you are having issues, please let us know.
-We have a mailing list located at: project@example.com
 
 
 License

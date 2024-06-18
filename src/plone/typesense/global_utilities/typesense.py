@@ -4,9 +4,6 @@ import threading
 import typesense
 from plone import api
 from plone.typesense import _, log
-from plone.typesense.controlpanels.typesense_controlpanel.controlpanel import (
-    ITypesenseControlpanel,
-)
 from zope.interface import Interface, implementer
 
 
@@ -141,11 +138,12 @@ class TypesenseConnector:
     def index(self, objects) -> None:
         """index given objects"""
         ts = self.get_client()
+        import pdb; pdb.set_trace()  # NOQA: E702
         objects_for_bulk = ""
         for object in objects:
             log.info(f"object: {object}")
-            if "uid" in object:
-                object["id"] = str(getattr(object, "uid"))
+            # if "uid" in object:
+            #     object["id"] = str(getattr(object, "uid"))
             objects_for_bulk += f"{json.dumps(object)}\n"
 
         log.info(f"Bulk import objects into {self.collection_base_name}'...")
@@ -184,7 +182,33 @@ class TypesenseConnector:
         )
         log.info(f"Clear current_aliased_index_name '{collection_name}'.")
         ts.collections[collection_name].delete()
-        # self.settings()
+        self.init_collection()
+
+    def init_collection(self) -> None:
+        ts = self._ts_client
+        try:
+            ts.collections[self.collection_base_name].retrieve()
+        except typesense.exceptions.ObjectNotFound:
+            client = self._ts_client
+            # To allow rolling updates, we work with index aliases
+            aliased_index_name = self._get_next_aliased_index_name()
+            # index_name / collection_name is part of the schema defined in
+            # self._index_config
+            index_config = self.get_ts_schema
+            index_config.update(
+                {
+                    "name": aliased_index_name,
+                }
+            )
+            log.info(f"Create aliased_index_name '{aliased_index_name}'...")
+            client.collections.create(index_config)
+            log.info(
+                f"Set collection alias '{self.collection_base_name}' >> aliased_index_name "
+                f"'{aliased_index_name}'."
+            )
+            client.aliases.upsert(
+                self.collection_base_name, {"collection_name": aliased_index_name}
+            )
 
     # def each(self) -> Iterator[dict[str, Any]]:
     #     """ """

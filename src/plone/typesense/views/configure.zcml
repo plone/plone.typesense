@@ -15,13 +15,4 @@
     layer="plone.typesense.interfaces.IPloneTypesenseLayer"
     />
 
-  <browser:page
-    name="typesense-test-connection"
-    for="*"
-    class=".typesense_test_connection.TypesenseTestConnection"
-    template="typesense_test_connection.pt"
-    permission="zope2.View"
-    layer="plone.typesense.interfaces.IPloneTypesenseLayer"
-    />
-
 </configure>

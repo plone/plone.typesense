@@ -2,13 +2,14 @@
 
 # from plone.typesense import _
 # from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from plone import api
-from plone.typesense import log
-from plone.typesense.global_utilities.typesense import ITypesenseConnector
 from Products.CMFCore.interfaces import ICatalogAware
 from Products.Five.browser import BrowserView
 from zope.component import getUtility
 from zope.interface import Interface, implementer
+
+from plone import api
+from plone.typesense import log
+from plone.typesense.global_utilities.typesense import ITypesenseConnector
 
 
 class ITypesenseReindexCollection(Interface):

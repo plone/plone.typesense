@@ -42,10 +42,10 @@ Features
 Goals
 -----
 
-plone.typesense is meant to be a full Plone integration, including permissions/roles. 
-You will be able to query Typesense directly from a client and also get all data from there. 
-This much faster than quering Plone which queries Typesense and you have to full query power of Typesense. 
-But everything inside Plone will work as exspected. So plone.api/restapi should have all known api calls. 
+plone.typesense is meant to be a full Plone integration, including permissions/roles.
+You will be able to query Typesense directly from a client and also get all data from there.
+This much faster than quering Plone which queries Typesense and you have to full query power of Typesense.
+But everything inside Plone will work as exspected. So plone.api/restapi should have all known api calls.
 But they are limited to what Plone offers with the default search.
 
 
@@ -63,6 +63,23 @@ Install plone.typesense by adding it to your buildout::
 
 
 and then running ``bin/buildout``
+
+Typesense
+.........
+
+This package requires a typesense search engine running.
+
+You can run one by using `podman-compose` up or `docker-compose up`.
+
+Please read this for a [quick docker based setup](https://typesense.org/docs/guide/install-typesense.html#option-2-local-machine-self-hosting).
+
+A nice UI is also available here: https://github.com/bfritscher/typesense-dashboard/releases
+
+Usage
+-----
+
+http://localhost/Plone/@@typesense-test-connection
+http://localhost/Plone/@@typesense-reindex-collection
 
 
 Authors

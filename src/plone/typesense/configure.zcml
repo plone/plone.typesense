@@ -45,10 +45,16 @@
 
   <include package=".views" />
 
-    <include package=".controlpanels" />
+  <include package=".controlpanels" />
 
 
   <include package=".subscribers" />
   <include package=".global_utilities" />
+
+
+  <utility
+      factory=".queueprocessor.IndexProcessor"
+      name="typesense"
+      />
 
 </configure>

@@ -36,6 +36,11 @@ class IndexProcessor:
         return self._ts_connector
 
     @property
+    def active(self):
+        """ Typesense active?"""
+        return self.ts_connector.enabled
+
+    @property
     def ts_client(self):
         """return Typesense client"""
         if not self._ts_client:
@@ -44,7 +49,15 @@ class IndexProcessor:
 
     def ts_index(self, objects):
         """index objects in Typesense"""
+        from pprint import pprint
+        pprint(objects)
         self.ts_connector.index(objects)
+
+    def ts_update(self, objects):
+        """update indexed objects in Typesense"""
+        from pprint import pprint
+        pprint(objects)
+        self.ts_connector.update(objects)
 
     @property
     def catalog(self):
@@ -99,7 +112,12 @@ class IndexProcessor:
                     value = None
                 if value in (None, "None"):
                     # yes, we'll index null data...
-                    value = None
+                    value = ""
+                # sometimes review state is an empty list, let's fix that
+                if index_name == "review_state" and isinstance(value, list):
+                    value = "".join(value)
+                if index_name == "total_comments" and isinstance(value, list):
+                    value = len(value) and value[0] or 0
             elif index_name in self.ts_attributes:
                 indexer = queryMultiAdapter(
                     (wrapped_object, catalog), IIndexer, name=index_name
@@ -114,6 +132,7 @@ class IndexProcessor:
                 value.decode("utf-8", "ignore") if isinstance(value, bytes) else value
             )
             index_data[index_name] = value
+
         # additional_providers = [
         #     adapter for adapter in getAdapters((obj,), IAdditionalIndexDataProvider)
         # ]
@@ -153,6 +172,8 @@ class IndexProcessor:
 
     @property
     def rebuild(self):
+        if not self.active:
+            return
         return False
         # return IReindexActive.providedBy(getRequest())
 
@@ -163,7 +184,7 @@ class IndexProcessor:
 
     def index(self, obj, attributes=None):
         """queue an index operation for the given object and attributes"""
-        if not self.ts_client:
+        if not self.active:
             return
         actions = self.actions
         uuid, path = self._uuid_path(obj)
@@ -198,11 +219,15 @@ class IndexProcessor:
 
     def reindex(self, obj, attributes=None, update_metadata=False):
         """queue a reindex operation for the given object and attributes"""
+        if not self.active:
+            return
         print(f"reindex: {obj.id}: {attributes}")
         self.index(obj, attributes)
 
     def unindex(self, obj):
         """queue an unindex operation for the given object"""
+        if not self.active:
+            return
         print(f"unindex: {obj.id}")
 
     def begin(self,):
@@ -216,18 +241,24 @@ class IndexProcessor:
 
     def commit_ts(self, wait=None):
         """Transaction commit."""
+        if not self.active:
+            return
         actions = self.actions
         items = len(actions) if actions else 0
         if self.ts_client and items:
-            ts_data = []
+            ts_data = {}
             from pprint import pprint
             data = actions.all()
             pprint(data)
             for action, uuid, payload in data:
                 payload = self._prepare_for_typesense(uuid, payload)
                 pprint(payload)
-                ts_data.append(payload)
-            self.ts_index(ts_data)
+                if action not in ts_data:
+                    ts_data[action] = []
+                ts_data[action].append(payload)
+            print(f"actions: {ts_data.keys()}")
+            self.ts_index(ts_data["index"])
+            self.ts_update(ts_data["update"])
         self._clean_up()
 
     def _prepare_for_typesense(self, uuid, payload):
@@ -235,8 +266,8 @@ class IndexProcessor:
         """
         if "id" in payload:
             plone_id = payload["id"]
-            payload["id"] = uuid
             payload["plone_id"] = plone_id
+        payload["id"] = uuid
         return payload
 
     def abort(self):

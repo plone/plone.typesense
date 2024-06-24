@@ -1,5 +1,5 @@
 from datetime import date, datetime
-
+import time
 from Acquisition import aq_base, aq_parent
 from DateTime import DateTime
 from Missing import MV
@@ -69,6 +69,8 @@ class BaseIndex:
             log.info(f"catalogObject was passed bad index object {self.index}.")
         if value == MV:
             return None
+        if isinstance(value, list) and len(value) == 0:
+            return None
         return value
 
 
@@ -100,9 +102,12 @@ class TDateIndex(BaseIndex):
         if value in ("None", MV, None, ""):
             value = self.missing_date
         if isinstance(value, str):
-            return DateTime(value).ISO8601()
+            value = DateTime(value)
+            utcvalue = value.utcdatetime()
+            return int(utcvalue.strftime("%s"))
         if isinstance(value, DateTime):
-            return value.ISO8601()
+            utcvalue = value.utcdatetime()
+            return int(utcvalue.strftime("%s"))
         return value
 
     def get_query(self, name, value):
@@ -224,7 +229,7 @@ class TExtendedPathIndex(BaseIndex):
                 path = obj.getPhysicalPath()
             except AttributeError:
                 return None
-        return {"path": "/".join(path), "depth": len(path) - 1}
+        return "/".join(path)
 
     def extract(self, name, data):
         return data[name]["path"]
@@ -306,8 +311,8 @@ class TDateRangeIndex(BaseIndex):
         if not since or not until:
             return None
         return {
-            f"{self.index.id}1": since.ISO8601(),
-            f"{self.index.id}2": until.ISO8601(),
+            f"{self.index.id}1": since.strftime("%s"),
+            f"{self.index.id}2": until.strftime("%s"),
         }
 
     def get_query(self, name, value):

@@ -44,8 +44,8 @@ Goals
 
 plone.typesense is meant to be a full Plone integration, including permissions/roles.
 You will be able to query Typesense directly from a client and also get all data from there.
-This much faster than quering Plone which queries Typesense and you have to full query power of Typesense.
-But everything inside Plone will work as exspected. So plone.api/restapi should have all known api calls.
+This much faster than querying Plone which queries Typesense and you have the full query power of Typesense.
+But everything inside Plone will work as expected. So plone.api/restapi should have all known API calls.
 But they are limited to what Plone offers with the default search.
 
 

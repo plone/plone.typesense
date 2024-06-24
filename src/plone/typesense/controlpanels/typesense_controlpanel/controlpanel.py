@@ -25,6 +25,7 @@ class ITypesenseControlpanel(Interface):
     enabled = schema.Bool(
         title=_("Typesense integration enabled"),
         default=True,
+        required=False,
     )
 
     collection = schema.TextLine(
@@ -95,25 +96,28 @@ class ITypesenseControlpanel(Interface):
         default={
             "name": None,
             "fields": [
-                {"name": "path", "type": "string"},
-                {"name": "id", "type": "string"},
-                {"name": "title", "type": "string", "infix": True},
-                {"name": "description", "type": "string"},
-                {"name": "headlines", "type": "string"},
-                {"name": "text", "type": "string", "infix": True},
-                {"name": "language", "type": "string", "facet": True},
+                {"name": ".*", "type": "auto" },
+                {"name": "cmf_uid", "index": False},
+                {"name": "path", "type": "string", "sort": True},
+                {"name": "Title", "type": "string", "infix": True},
+                {"name": "sortable_title", "type": "string", "sort": True},
+                {"name": "getObjPositionInParent", "type": "string", "sort": True},
+                {"name": "Description", "type": "string"},
+                {"name": "SearchableText", "type": "string", "infix": True},
+                {"name": "language", "type": "string", "facet": True, "optional": True},
                 {"name": "portal_type", "type": "string", "facet": True},
+                {"name": "Type", "type": "string", "facet": True},
                 {"name": "review_state", "type": "string", "facet": True},
-                {"name": "subject", "type": "string[]", "facet": True},
-                {"name": "created", "type": "string", "facet": False},
-                {"name": "modified", "type": "string", "facet": False},
-                {"name": "effective", "type": "string", "facet": False},
-                {"name": "expires", "type": "string", "facet": False},
-                {"name": "document_type_order", "type": "int32"},
-                {"name": "_indexed", "type": "string"},
-                {"name": "all_paths", "type": "string[]", "facet": False},
+                {"name": "total_comments", "type": "int32", "facet": False, "optional": True},
+                {"name": "Subject", "type": "string[]", "facet": True},
+                {"name": "allowedRolesAndUsers", "type": "string[]", "facet": False},
+                {"name": "Date", "type": "int64", "facet": False},
+                {"name": "created", "type": "int64", "facet": False},
+                {"name": "modified", "type": "int64", "facet": False},
+                {"name": "effective", "type": "int64", "facet": False},
+                {"name": "expires", "type": "int64", "facet": False},
             ],
-            "default_sorting_field": "document_type_order",
+            "default_sorting_field": "sortable_title",
             "token_separators": ["-"],
             "attributesToSnippet": [
                 "title",
@@ -152,6 +156,30 @@ class TypesenseControlpanel(RegistryEditForm):
     @button.buttonAndHandler(_("Save"), name=None)
     def handleSave(self, action):
         self.save()
+
+    def save(self):
+        data, errors = self.extractData()
+
+        if errors:
+            self.status = self.formErrorsMessage
+            return False
+        old_collection_name = api.portal.get_registry_record(
+            "plone.typesense.typesense_controlpanel.collection"
+        )
+        old_collection_schema = api.portal.get_registry_record(
+            "plone.typesense.typesense_controlpanel.ts_schema"
+        )
+
+        self.applyChanges(data)
+
+        # if collection name changed, initialize new collection
+        # TODO migrate collection data
+        ts_connector = getUtility(ITypesenseConnector)
+        if old_collection_name != data.get("collection"):
+            ts_connector.init_collection()
+        elif old_collection_schema != data.get("ts_schema"):
+            ts_connector.clear()
+        return True
 
     @button.buttonAndHandler(_("Cancel"), name="cancel")
     def handleCancel(self, action):
@@ -197,14 +225,6 @@ class TypesenseControlpanel(RegistryEditForm):
         # portal.ZopeFindAndApply(portal, search_sub=True, apply_func=_index_object)
         # return self.index()
 
-    # def save(self):
-    #     data, errors = self.extractData()
-    #     if errors:
-    #         self.status = self.formErrorsMessage
-    #         return False
-
-    #     self.applyChanges(data)
-    #     return True
 
 
 TypesenseControlpanelView = layout.wrap_form(

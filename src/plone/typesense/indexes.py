@@ -56,6 +56,12 @@ class BaseIndex:
         self.catalog = catalog
         self.index = index
 
+    def _normalize_query(self, value):
+        """Extract the actual query value from a dict wrapper like {"query": val}."""
+        if isinstance(value, dict):
+            return value.get("query", value)
+        return value
+
     def get_value(self, obj):
         value = None
         attrs = self.index.getIndexSourceNames()
@@ -347,5 +353,6 @@ try:
 except ImportError:
     pass
 
-
+# Alias for backward compatibility
+getIndex = get_index
 

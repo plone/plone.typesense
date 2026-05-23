@@ -35,7 +35,7 @@ class TypesenseBrain:
 
     def getPath(self):
         """Get the physical path for this record"""
-        return self._record["path"]["path"]
+        return self._record["path"]
 
     def getURL(self, relative=0):
         """Generate a URL for this record"""
@@ -68,28 +68,56 @@ def BrainFactory(manager):
     def factory(result: dict) -> Union[AbstractCatalogBrain, TypesenseBrain]:
         catalog = manager.catalog
         zcatalog = catalog._catalog
-        path = result.get("fields", {}).get("path.path", None)
+        path = result.get("document", {}).get("path")
         if type(path) in (list, tuple, set) and len(path) > 0:
             path = path[0]
         if path:
             brain = get_brain_from_path(zcatalog, path)
             if not brain:
-                result = manager.get_record_by_path(path)
-                brain = TypesenseBrain(record=result, catalog=catalog)
-            if manager.highlight and result.get("highlight"):
+                result_doc = manager.get_record_by_path(path)
+                brain = TypesenseBrain(record=result_doc, catalog=catalog)
+            if manager.highlight and result.get("highlights"):
                 fragments = []
                 fraglen = 0
-                for idx, i in enumerate(result["highlight"].get("SearchableText", [])):
-                    fraglen += len(i)
-                    if idx > 0 and fraglen > manager.highlight_threshold:
-                        break
-                    fragments.append(i)
-                brain["Description"] = " ... ".join(fragments)
+                for highlight in result.get("highlights", []):
+                    if highlight.get("field") == "SearchableText":
+                        for idx, snippet in enumerate(highlight.get("snippets", [])):
+                            fraglen += len(snippet)
+                            if idx > 0 and fraglen > manager.highlight_threshold:
+                                break
+                            fragments.append(snippet)
+                if fragments:
+                    brain["Description"] = " ... ".join(fragments)
             return brain
-        # We should handle cases where there is no path in the ES response
         return None
 
     return factory
+
+
+class FacetResult:
+    """Wraps Typesense faceted search results."""
+
+    def __init__(self, results, facet_counts, count):
+        self.results = results
+        self.count = count
+        self._raw_facet_counts = facet_counts
+        self.facet_counts = self._normalize_facets(facet_counts)
+
+    def _normalize_facets(self, raw):
+        if not raw:
+            return {}
+        normalized = {}
+        for facet in raw:
+            field_name = facet.get("field_name")
+            if field_name:
+                normalized[field_name] = facet.get("counts", [])
+        return normalized
+
+    def get_facet_values(self, field_name):
+        return self.facet_counts.get(field_name, [])
+
+    def __len__(self):
+        return self.count
 
 
 class TypesenseResult:
@@ -108,9 +136,9 @@ class TypesenseResult:
         # but the start index of the bulk size for the
         # results it holds. This way we can skip around
         # for result data in a result object
-        result = manager._search(self.query, sort=self.sort, **query_params)["hits"]
+        result = manager._search(self.query, sort=self.sort, **query_params)
         self.results = {0: result["hits"]}
-        self.count = result["total"]["value"]
+        self.count = result["found"]
         self.query_params = query_params
 
     def __len__(self):
@@ -156,5 +184,5 @@ class TypesenseResult:
         if result_key not in self.results:
             self.results[result_key] = self.manager._search(
                 self.query, sort=self.sort, start=start, **self.query_params
-            )["hits"]["hits"]
+            )["hits"]
         return self.results[result_key][result_index]

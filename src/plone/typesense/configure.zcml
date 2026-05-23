@@ -57,4 +57,11 @@
       name="typesense"
       />
 
+  <adapter
+      factory=".query.TypesenseQueryAssembler"
+      provides=".interfaces.IQueryAssembler"
+      for="zope.publisher.interfaces.browser.IBrowserRequest
+           .interfaces.ITypesenseManager"
+      />
+
 </configure>

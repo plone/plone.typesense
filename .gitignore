@@ -39,3 +39,4 @@ venv/
 # excludes
 /typesense-data/*
 **/worktrees/*
+**/instance*/inituser

@@ -1,3 +1,6 @@
+import httpx
+from typesense import exceptions as typesense_exceptions
+
 from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject, IIndexer
@@ -15,6 +18,17 @@ from plone.typesense.interfaces import (
     ITypesenseSearchIndexQueueProcessor,
 )
 from plone.typesense.utils import get_ts_only_indexes
+
+
+# Errors raised when the Typesense backend is unreachable or rejects a request.
+# These must never break the surrounding Plone transaction: the content has
+# already been written to the ZODB, only the search index is (temporarily) out
+# of sync and can be reconciled with a reindex.
+INDEXING_BACKEND_ERRORS = (
+    typesense_exceptions.TypesenseClientError,
+    httpx.HTTPError,
+    OSError,
+)
 
 
 @implementer(ITypesenseSearchIndexQueueProcessor)
@@ -49,14 +63,10 @@ class IndexProcessor:
 
     def ts_index(self, objects):
         """index objects in Typesense"""
-        from pprint import pprint
-        pprint(objects)
         self.ts_connector.index(objects)
 
     def ts_update(self, objects):
         """update indexed objects in Typesense"""
-        from pprint import pprint
-        pprint(objects)
         self.ts_connector.update(objects)
 
     @property
@@ -95,7 +105,7 @@ class IndexProcessor:
             log.warning(f"could not find obj for: {uuid}")
             return index_data
         else:
-            print(f"found obj: {obj.id}")
+            log.debug(f"found obj: {obj.id}")
         wrapped_object = self.wrap_object(obj)
         attributes = attributes if attributes else self.all_attributes
         catalog = self.catalog
@@ -139,7 +149,7 @@ class IndexProcessor:
         # if additional_providers:
         #     for _, adapter in additional_providers:
         #         index_data.update(adapter(catalog, index_data))
-        print(f"index_data:\n {index_data}")
+        log.debug(f"index_data:\n {index_data}")
         return index_data
 
     def _clean_up(self):
@@ -221,22 +231,22 @@ class IndexProcessor:
         """queue a reindex operation for the given object and attributes"""
         if not self.active:
             return
-        print(f"reindex: {obj.id}: {attributes}")
+        log.debug(f"reindex: {obj.id}: {attributes}")
         self.index(obj, attributes)
 
     def unindex(self, obj):
         """queue an unindex operation for the given object"""
         if not self.active:
             return
-        print(f"unindex: {obj.id}")
+        log.debug(f"unindex: {obj.id}")
 
     def begin(self,):
         """called before processing of the queue is started"""
-        print(f"begin()")
+        log.debug("begin()")
 
     def commit(self, wait=None):
         """called after processing of the queue has ended"""
-        print("commit()")
+        log.debug("commit()")
         self.commit_ts()
 
     def commit_ts(self, wait=None):
@@ -247,18 +257,28 @@ class IndexProcessor:
         items = len(actions) if actions else 0
         if self.ts_client and items:
             ts_data = {}
-            from pprint import pprint
             data = actions.all()
-            pprint(data)
             for action, uuid, payload in data:
                 payload = self._prepare_for_typesense(uuid, payload)
-                pprint(payload)
                 if action not in ts_data:
                     ts_data[action] = []
                 ts_data[action].append(payload)
-            print(f"actions: {ts_data.keys()}")
-            self.ts_index(ts_data["index"])
-            self.ts_update(ts_data["update"])
+            log.debug(f"actions: {ts_data.keys()}")
+            try:
+                if "index" in ts_data:
+                    self.ts_index(ts_data["index"])
+                if "update" in ts_data:
+                    self.ts_update(ts_data["update"])
+            except INDEXING_BACKEND_ERRORS as exc:
+                # Don't let a search-backend failure abort the transaction that
+                # is committing the user's content. Log it so the missed update
+                # can be reconciled by a reindex.
+                log.error(
+                    "Typesense indexing failed during commit; content was "
+                    "saved but is not reflected in the search index. "
+                    "Reason: %r",
+                    exc,
+                )
         self._clean_up()
 
     def _prepare_for_typesense(self, uuid, payload):
@@ -272,7 +292,7 @@ class IndexProcessor:
 
     def abort(self):
         """called if processing of the queue needs to be aborted"""
-        print(f"abort()")
+        log.debug("abort()")
 
     def get_blob_data(self, uuid, obj):
         """Go thru schemata and extract infos about blob fields"""

@@ -18,6 +18,38 @@ class ITypesenseSearchIndexQueueProcessor(IIndexQueueProcessor):
     """Index queue processor for Typesense."""
 
 
+class IQueryAssembler(Interface):
+    """Assembles a Typesense search query from Plone catalog query parameters."""
+
+
+class IReindexActive(Interface):
+    """Marker interface set on the request during a full catalog rebuild."""
+
+
+class IMappingAdapter(Interface):
+    """Adapter that generates a Typesense collection schema from Plone catalog indexes."""
+
+    def get_schema(collection_name=None):
+        """Generate a full Typesense collection schema."""
+
+    def get_field_names():
+        """Return a set of field names that would be in the schema."""
+
+
+class IMappingProvider(Interface):
+    """Provides additional Typesense field definitions beyond catalog indexes."""
+
+    def get_fields():
+        """Return a list of additional Typesense field definitions."""
+
+
+# Alias for backward compatibility
+from plone.typesense.controlpanels.typesense_controlpanel.controlpanel import (
+    ITypesenseControlpanel,
+)
+ITypesenseSettings = ITypesenseControlpanel
+
+
 @dataclass
 class IndexingActions:
 

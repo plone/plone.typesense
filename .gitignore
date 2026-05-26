@@ -37,4 +37,7 @@ report.html
 reports/
 venv/
 # excludes
+.claude/settings.local.json
 /typesense-data/*
+**/worktrees/*
+**/instance*/inituser

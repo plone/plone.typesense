@@ -1,0 +1,116 @@
+[project]
+name = "plone.typesense"
+version = "1.0.0a1"
+description = "A Plone Typesense integration"
+readme = "README.md"
+license = "GPL-2.0-only"
+requires-python = ">=3.12"
+authors = [
+    {name = "MrTango", email = "md@derico.de"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: Plone",
+    "Framework :: Plone :: Addon",
+    "Framework :: Plone :: 6.1",
+    "License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+keywords = ["Plone", "CMS"]
+
+dependencies = [
+    "setuptools",
+    "z3c.jbot",
+    "plone.api>=1.8.4",
+    "plone.app.dexterity",
+    "typesense",
+    "plone.restapi",
+    "plone.classicui",
+    "Paste",
+    "plone.app.caching",
+    "plone.app.upgrade",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "pytest-plone>=0.5.0",
+    "plone.app.testing",
+    "plone.testing",
+]
+dev = ["invoke", "watchdog"]
+
+[project.urls]
+Homepage = "https://github.com/collective/plone.typesense"
+Documentation = "https://github.com/collective/plone.typesense"
+Repository = "https://github.com/collective/plone.typesense.git"
+Issues = "https://github.com/collective/plone.typesense/issues"
+
+[project.entry-points."z3c.autoinclude.plugin"]
+target = "plone"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plone"]
+
+[tool.plone.backend_addon.settings]
+package_name = "plone.typesense"
+package_folder = "plone/typesense"
+plone_version = "6.1"
+is_headless = false
+author_name = "MrTango"
+author_email = "md@derico.de"
+
+[tool.plone.backend_addon.settings.subtemplates]
+content_types = []
+behaviors = []
+services = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
+[tool.coverage.run]
+source = ["plone.typesense"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "W",    # pycodestyle warnings
+    "C90",  # mccabe complexity
+    "B",    # bugbear
+    "S",    # bandit (security)
+    "UP",   # pyupgrade
+    "SIM",  # simplify
+    "PGH",  # pygrep-hooks
+]
+ignore = ["E731"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["plone"]
+
+[tool.plone.project.settings]
+plone_version = "6.1.4"
+distribution = "plone.classicui"
+db_storage = "direct"
+
+[tool.ruff.format]
+preview = true

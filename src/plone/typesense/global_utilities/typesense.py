@@ -34,9 +34,8 @@ class TypesenseConnector:
             return api.portal.get_registry_record(
                 "plone.typesense.typesense_controlpanel.enabled"
             )
-        except api.exc.InvalidParameterError:
-            value = False
-        return value
+        except (api.exc.InvalidParameterError, Exception):
+            return False
 
     @property
     def collection_base_name(self):
@@ -124,14 +123,16 @@ class TypesenseConnector:
         except typesense.TypesenseClientError as exc:
             raise TypesenseError(_("Unable to connect :") + "\n\n" + repr(exc)) from exc
 
-    def _get_current_aliased_collection_name(self) -> str:
+    def _get_current_aliased_collection_name(self) -> str | None:
         """Get the current aliased index name if any"""
         ts = self.get_client()
-        current_aliased_index_name = None
-        alias = ts.aliases[self.collection_base_name].retrieve()
+        try:
+            alias = ts.aliases[self.collection_base_name].retrieve()
+        except typesense.exceptions.ObjectNotFound:
+            return None
         if "collection_name" in alias:
-            current_aliased_index_name = alias["collection_name"]
-        return current_aliased_index_name
+            return alias["collection_name"]
+        return None
 
     def _get_next_aliased_collection_name(
         self, aliased_index_name: str | None = None
@@ -149,8 +150,18 @@ class TypesenseConnector:
             next_version = int(aliased_index_name.split("-")[-1]) + 1
         return f"{self.collection_base_name}-{next_version}"
 
+    def _ensure_collection(self) -> None:
+        """Ensure the collection exists, creating it if necessary."""
+        ts = self.get_client()
+        try:
+            ts.collections[self.collection_base_name].retrieve()
+        except typesense.exceptions.ObjectNotFound:
+            log.info(f"Collection '{self.collection_base_name}' not found, initializing.")
+            self.init_collection()
+
     def update(self, objects) -> None:
         """update given objects"""
+        self._ensure_collection()
         ts = self.get_client()
         objects_for_bulk = ""
         for obj in objects:
@@ -159,6 +170,7 @@ class TypesenseConnector:
 
     def index(self, objects) -> None:
         """index given objects"""
+        self._ensure_collection()
         ts = self.get_client()
         objects_for_bulk = ""
         for obj in objects:
@@ -201,8 +213,27 @@ class TypesenseConnector:
             self._get_current_aliased_collection_name() or self.collection_base_name
         )
         log.info(f"Clear current_aliased_collection_name '{collection_name}'.")
-        ts.collections[collection_name].delete()
+        try:
+            ts.collections[collection_name].delete()
+        except typesense.exceptions.ObjectNotFound:
+            log.info(f"Collection '{collection_name}' does not exist, skipping delete.")
         self.init_collection()
+
+    def _sanitize_schema_fields(self, schema: dict) -> None:
+        """Ensure every field in the schema has a 'type' key.
+
+        Existing installations may have registry data with fields missing the
+        required 'type' property (e.g. cmf_uid).  This adds 'type': 'auto' as
+        a safe default so Typesense does not reject the schema with a 400.
+        """
+        for field in schema.get("fields", []):
+            if "name" in field and "type" not in field:
+                log.warning(
+                    "Field '%s' in Typesense schema is missing 'type', "
+                    "defaulting to 'auto'.",
+                    field["name"],
+                )
+                field["type"] = "auto"
 
     def init_collection(self) -> None:
         ts = self.get_client()
@@ -219,6 +250,7 @@ class TypesenseConnector:
                     "name": aliased_index_name,
                 }
             )
+            self._sanitize_schema_fields(index_config)
             log.info(f"Create aliased_index_name '{aliased_index_name}'...")
             ts.collections.create(index_config)
             log.info(

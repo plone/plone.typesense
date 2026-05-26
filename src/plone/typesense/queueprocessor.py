@@ -1,3 +1,6 @@
+import httpx
+from typesense import exceptions as typesense_exceptions
+
 from plone.app.uuid.utils import uuidToObject
 from plone.dexterity.utils import iterSchemata
 from plone.indexer.interfaces import IIndexableObject, IIndexer
@@ -15,6 +18,17 @@ from plone.typesense.interfaces import (
     ITypesenseSearchIndexQueueProcessor,
 )
 from plone.typesense.utils import get_ts_only_indexes
+
+
+# Errors raised when the Typesense backend is unreachable or rejects a request.
+# These must never break the surrounding Plone transaction: the content has
+# already been written to the ZODB, only the search index is (temporarily) out
+# of sync and can be reconciled with a reindex.
+INDEXING_BACKEND_ERRORS = (
+    typesense_exceptions.TypesenseClientError,
+    httpx.HTTPError,
+    OSError,
+)
 
 
 @implementer(ITypesenseSearchIndexQueueProcessor)
@@ -250,10 +264,21 @@ class IndexProcessor:
                     ts_data[action] = []
                 ts_data[action].append(payload)
             log.debug(f"actions: {ts_data.keys()}")
-            if "index" in ts_data:
-                self.ts_index(ts_data["index"])
-            if "update" in ts_data:
-                self.ts_update(ts_data["update"])
+            try:
+                if "index" in ts_data:
+                    self.ts_index(ts_data["index"])
+                if "update" in ts_data:
+                    self.ts_update(ts_data["update"])
+            except INDEXING_BACKEND_ERRORS as exc:
+                # Don't let a search-backend failure abort the transaction that
+                # is committing the user's content. Log it so the missed update
+                # can be reconciled by a reindex.
+                log.error(
+                    "Typesense indexing failed during commit; content was "
+                    "saved but is not reflected in the search index. "
+                    "Reason: %r",
+                    exc,
+                )
         self._clean_up()
 
     def _prepare_for_typesense(self, uuid, payload):
